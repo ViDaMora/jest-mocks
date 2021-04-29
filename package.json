@@ -1,0 +1,29 @@
+{
+  "name": "jest.testing.manual.mocking",
+  "version": "1.0.0",
+  "description": "Basic script in order to test the Jest Testing Framework manual mocking.",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon --watch src --exec babel-node src/app.js",
+    "test": "jest --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddialar/jest.manual.mocking.git"
+  },
+  "keywords": [
+    "Javascript",
+    "Testing",
+    "Jest"
+  ],
+  "author": "Dailos Rafael Dïaz Lara <ddialar@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/ddialar/jest.manual.mocking#readme",
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-jest": "^20.0.3",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^4.4.1"
+  },
+  "dependencies": {}
+}
