@@ -1,0 +1,47 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest' 
+
+steps:
+- task: NodeTool@0 
+  inputs:
+    versionSpec: '14.17.0'
+- script: |
+    npm install
+    npm run test
+  displayName: 'npm install and test'
+
+- task: SonarQubePrepare@4
+  displayName: 'Prepare analysis on SonarQube'
+  inputs:
+    SonarQube: 'SonarLocal'
+    scannerMode: 'CLI'
+    configMode: manual
+    cliProjectKey: '$(Build.Repository.Name)'
+    cliProjectName: '$(Build.Repository.Name)'
+    cliProjectVersion: '$(Build.BuildNumber)'
+    cliSources: Company
+    extraProperties: |
+     sonar.branch.name=$(Build.SourceBranchName)
+
+- task: SonarQubeAnalyze@4
+  displayName: 'Run Code Analysis'
+
+- task: sonar-buildbreaker@8
+  inputs:
+    SonarQube: 'SonarLocal'
+
+- task: Npm@1
+  displayName: npm run test
+  inputs:
+    command: 'custom'
+    workingDir: 'src/app'
+    customCommand: 'run test'
+
+- task: PublishTestResults@2
+  displayName: 'supply npm test results to pipelines'
+  condition: succeededOrFailed() # because otherwise we won't know what tests failed
+  inputs:
+    testResultsFiles: 'src/app/junit.xml'
