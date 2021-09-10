@@ -1,18 +1,17 @@
 trigger:
-- master
+  branches:
+    include:
+      - trunk
+      - feature/*
+  paths:
+    include:
+      - 'Company/*'
 
 pool:
-  vmImage: 'ubuntu-latest' 
+  name: HostedVS2017
+  demands: java
 
 steps:
-- task: NodeTool@0 
-  inputs:
-    versionSpec: '14.17.0'
-- script: |
-    npm install
-    npm run test
-  displayName: 'npm install and test'
-
 - task: SonarQubePrepare@4
   displayName: 'Prepare analysis on SonarQube'
   inputs:
@@ -24,7 +23,25 @@ steps:
     cliProjectVersion: '$(Build.BuildNumber)'
     cliSources: Company
     extraProperties: |
+     sonar.java.binaries=$(Build.SourcesDirectory)/Company/build/classes
+     sonar.java.libraries=Company/build/libs
      sonar.branch.name=$(Build.SourceBranchName)
+      sonar.exclusions = */.gradle,*/.XML,Company/src/test/**/*,Company/CCReport43F6D5EF/**/* 
+      sonar.coverage.jacoco.xmlReportPaths=Company/CCReport43F6D5EF/summary.xml
+
+- task: Gradle@2
+  displayName: 'gradlew clean build'
+  inputs:
+    gradleWrapperFile: 'Company/gradlew'
+    workingDirectory: 'Company'
+    tasks: 'clean build'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.11'
+    codeCoverageToolOption: 'JaCoCo'
+    codeCoverageClassFilesDirectories: 'Company/build/classes/java/main'
+    publishJUnitResults: true
+    testResultsFiles: '**/TEST-*.xml'
+    sonarQubeRunAnalysis: false
 
 - task: SonarQubeAnalyze@4
   displayName: 'Run Code Analysis'
@@ -32,16 +49,12 @@ steps:
 - task: sonar-buildbreaker@8
   inputs:
     SonarQube: 'SonarLocal'
-
-- task: Npm@1
-  displayName: npm run test
+- task: PublishCodeCoverageResults@1
   inputs:
-    command: 'custom'
-    workingDir: 'src/app'
-    customCommand: 'run test'
-
-- task: PublishTestResults@2
-  displayName: 'supply npm test results to pipelines'
-  condition: succeededOrFailed() # because otherwise we won't know what tests failed
+    codeCoverageTool: 'JaCoCo'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/Company/CCReport43F6D5EF/summary.xml'
+- task: PublishBuildArtifacts@1
   inputs:
-    testResultsFiles: 'src/app/junit.xml'
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/Company/build/libs'
+    ArtifactName: 'Company'
+    publishLocation: 'Container'
